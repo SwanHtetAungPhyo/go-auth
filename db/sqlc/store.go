@@ -35,7 +35,7 @@ func (s *Store) WithTx(ctx context.Context, fn TxFunc) error {
 	defer func(tx pgx.Tx, ctx context.Context) {
 		err := tx.Rollback(ctx)
 		if err != nil {
-			log.Printf("rolling back tx: %w", err)
+			log.Printf("rolling back tx: %v", err)
 		}
 	}(tx, ctx)
 
