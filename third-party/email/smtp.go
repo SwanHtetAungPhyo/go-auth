@@ -16,16 +16,16 @@ type Config struct {
 	From     string
 }
 
-type EmailService struct {
+type SMTP struct {
 	Config Config
 }
 
 // NewEmailService initializes the email service
-func NewEmailService(cfg Config) *EmailService {
-	return &EmailService{Config: cfg}
+func NewEmailService(cfg Config) *SMTP {
+	return &SMTP{Config: cfg}
 }
 
-func (s *EmailService) SendTemplateEmail(to string, subject string, templatePath string, data interface{}) error {
+func (s *SMTP) SendTemplateEmail(to string, subject string, templatePath string, data interface{}) error {
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)

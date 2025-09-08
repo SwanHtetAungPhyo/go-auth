@@ -18,12 +18,27 @@ type GithubOauth struct {
 	RedirectURL  string
 	CallBackURL  string
 }
+type EmailConfig struct {
+	Type string
+}
+
+type Payment struct {
+	Type string
+}
+type ThirdPartyConfig struct {
+	Email   bool
+	Payment bool
+}
 
 type Config struct {
 	DNS         string
 	JwtAuth     bool
+	PestoAuth   bool
+	ThirdParty  ThirdPartyConfig
 	GithubOauth *GithubOauth
 	GoogleOauth *GoogleOauth
+	EmailConfig *EmailConfig
+	Payment     *Payment
 }
 
 type Option func(*Config)
@@ -39,7 +54,7 @@ func NewGoAuth(dsn string, opts ...Option) *Config {
 		log.Fatal().Msg("dsn is required for the goauth service")
 	}
 
-	cfg := &Config{DNS: dsn, JwtAuth: false}
+	cfg := &Config{DNS: dsn, JwtAuth: true, PestoAuth: false}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -50,6 +65,9 @@ func NewGoAuth(dsn string, opts ...Option) *Config {
 	// Auth setup
 	if cfg.JwtAuth {
 		initialization.ValidateJwtAuth()
+	}
+	if cfg.PestoAuth {
+		initialization.ValidatePestoAuth()
 	}
 	if cfg.GoogleOauth != nil {
 		initialization.ValidateGoogleOauth()

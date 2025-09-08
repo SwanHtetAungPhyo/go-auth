@@ -41,3 +41,12 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
+
+func ValidatePestoAuth() {
+	pestoKey := getEnv("GOAUTH_PESTO_KEY", "")
+	pestoSecret := getEnv("GOAUTH_PESTO_SECRET", "")
+	if pestoKey == "" || pestoSecret == "" {
+		log.Fatal().Msg("goauth: missing Pesto OAuth credentials")
+	}
+	log.Info().Msg("goauth: using Pesto authentication")
+}
