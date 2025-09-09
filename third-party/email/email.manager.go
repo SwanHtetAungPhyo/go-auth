@@ -223,6 +223,24 @@ func (es *EmailService) SendWelcomeEmail(ctx context.Context, to, name string) e
 		Send(ctx)
 }
 
+func (es *EmailService) SendVerificationEmail(ctx context.Context, to, code, deepLink string) error {
+	data := struct {
+		Code     string
+		DeepLink string
+	}{
+		Code:     code,
+		DeepLink: deepLink,
+	}
+	applicationName := os.Getenv("GOAUTH_APPLICATION_NAME")
+
+	return es.manager.NewBuilder().
+		To(to).
+		Subject("Email Verification Code"+string(applicationName)).
+		BodyFromTemplate("templates/verification.html", data).
+		Tag("type", "verification").
+		Send(ctx)
+}
+
 // SendPasswordResetEmail sends a password reset email
 func (es *EmailService) SendPasswordResetEmail(ctx context.Context, to, resetLink string) error {
 	data := struct {

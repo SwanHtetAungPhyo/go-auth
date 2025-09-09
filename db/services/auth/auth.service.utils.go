@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"fmt"
+	"math/rand"
+	"os"
 	"time"
 
 	"github.com/SwanHtetAungPhyo/go-auth/framework/utils"
@@ -24,4 +27,13 @@ func (s Service) generateToken(userId string, role string, meta map[string]inter
 	}
 
 	return nil, nil
+}
+
+func (s Service) generateSixDigit() string {
+	rand.NewSource(time.Now().UnixNano())
+	return fmt.Sprintf("%06d", rand.Intn(1000000))
+}
+func (s Service) buildDeepLink(email, code string) string {
+	frontendURL := os.Getenv("GOAUTH_FRONTEND_URL") // e.g. https://myapp.com/verify
+	return fmt.Sprintf("%s/verify?email=%s&code=%s", frontendURL, email, code)
 }

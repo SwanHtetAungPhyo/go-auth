@@ -48,7 +48,7 @@ type Config struct {
 	GoogleOauth         *GoogleOauth
 	EmailConfig         *EmailConfig
 	Payment             *Payment
-	redisClient         *redis.Client
+	RedisClient         *redis.Client
 	EmailService        *email.EmailService
 	IsProduction        bool
 }
@@ -68,12 +68,12 @@ func NewGoAuth(dsn string, config *Config, opts ...Option) *Config {
 	if cfg.SessionStoreAsRedis {
 		initialization.ValidateRedis()
 
-		cfg.redisClient = redis.NewClient(&redis.Options{
+		cfg.RedisClient = redis.NewClient(&redis.Options{
 			Addr:     os.Getenv("GOAUTH_REDIS_ADDRESS"),
 			Password: os.Getenv("GOAUTH_REDIS_PASSWORD"),
 		})
 
-		cfg.redisClient.Ping(context.Background())
+		cfg.RedisClient.Ping(context.Background())
 	}
 	// Database setup
 	_ = initialization.Database(cfg.DNS, cfg.SessionStoreAsRedis)

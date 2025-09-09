@@ -36,6 +36,17 @@ func (s Service) Register(req *framework.RegisterRequest) (framework.AuthRespons
 	if s.cfg.IsProduction {
 		var wg sync.WaitGroup
 		wg.Go(func() {
+			emailVerificationCode := s.generateSixDigit()
+			deepLink := s.buildDeepLink(user.Email, emailVerificationCode)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			s.cfg.RedisClient.Set(ctx, "email_verification_"+user.ID.String(), emailVerificationCode, time.Minute*15)
+			err := s.emailType.SendWelcomeEmail(context.Background(), emailVerificationCode, deepLink)
+			if err != nil {
+				log.Err(err).Msg("failed to send welcome email")
+				return
+			}
 			//s.emailType.SendNotificationEmail()
 
 		})

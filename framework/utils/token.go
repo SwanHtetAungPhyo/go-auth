@@ -112,7 +112,7 @@ func ValidateToken(tokenString string, tokenType TokenType) (interface{}, error)
 // ----------------------
 
 func validateJWT(tokenString string) (*jwt.Token, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
+	jwtSecret := os.Getenv("GOAUTH_JWT_SECRET")
 	if jwtSecret == "" {
 		return nil, errors.New("JWT_SECRET not set in environment")
 	}
@@ -135,7 +135,7 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 // ----------------------
 
 func validatePaseto(tokenString string) (*paseto.JSONToken, error) {
-	pasetoKey := os.Getenv("PASETO_KEY")
+	pasetoKey := os.Getenv("GOAUTH_PASETO_KEY")
 	if pasetoKey == "" {
 		return nil, errors.New("PASETO_KEY not set in environment")
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/SwanHtetAungPhyo/go-auth/third-party/email"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 )
 
 type AuthService interface {
@@ -20,7 +19,6 @@ type AuthService interface {
 type Service struct {
 	Store     *db.Store
 	cfg       goauth.Config
-	client    redis.Client
 	emailType *email.EmailService
 }
 
@@ -37,11 +35,6 @@ func NewAuthService(conn *pgxpool.Pool, cfg goauth.Config, opts ...Option) Servi
 		opt(&service)
 	}
 	return service
-}
-func WithRedisClient(client redis.Client) Option {
-	return func(s *Service) {
-		s.client = client
-	}
 }
 
 var _ AuthService = (*Service)(nil)
