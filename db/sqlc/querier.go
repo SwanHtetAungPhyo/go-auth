@@ -7,7 +7,7 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -15,6 +15,7 @@ type Querier interface {
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (GoauthAccount, error)
 	CreateAccountIndexes(ctx context.Context) error
 	CreateAccountTable(ctx context.Context) error
+	CreateAuditLogTable(ctx context.Context) error
 	CreateEmailVerificationTable(ctx context.Context) error
 	// sql/queries/email_verification.sql
 	CreateEmailVerificationToken(ctx context.Context, arg CreateEmailVerificationTokenParams) (GoauthEmailVerification, error)
@@ -33,18 +34,18 @@ type Querier interface {
 	DeleteExpiredPasswordResetTokens(ctx context.Context) error
 	DeleteExpiredSessions(ctx context.Context) error
 	DeletePasswordResetToken(ctx context.Context, token string) error
-	DeleteSession(ctx context.Context, id pgtype.UUID) error
-	DeleteUser(ctx context.Context, id pgtype.UUID) error
-	DeleteUserEmailVerificationTokens(ctx context.Context, userID pgtype.UUID) error
-	DeleteUserPasswordResetTokens(ctx context.Context, userID pgtype.UUID) error
-	DeleteUserSessions(ctx context.Context, userID pgtype.UUID) error
+	DeleteSession(ctx context.Context, id uuid.UUID) error
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	DeleteUserEmailVerificationTokens(ctx context.Context, userID uuid.UUID) error
+	DeleteUserPasswordResetTokens(ctx context.Context, userID uuid.UUID) error
+	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	GetAccountByProvider(ctx context.Context, arg GetAccountByProviderParams) (GetAccountByProviderRow, error)
 	GetEmailVerificationToken(ctx context.Context, token string) (GoauthEmailVerification, error)
 	GetPasswordResetToken(ctx context.Context, token string) (GoauthPasswordReset, error)
 	GetSession(ctx context.Context, token string) (GoauthSession, error)
-	GetSessionByID(ctx context.Context, id pgtype.UUID) (GoauthSession, error)
+	GetSessionByID(ctx context.Context, id uuid.UUID) (GoauthSession, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
-	GetUserByID(ctx context.Context, userID pgtype.UUID) (GetUserByIDRow, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (GetUserByIDRow, error)
 	GoAuthRegister(ctx context.Context, arg GoAuthRegisterParams) (GoauthUser, error)
 	// Complete setup in one command
 	SetupAuthTables(ctx context.Context) error

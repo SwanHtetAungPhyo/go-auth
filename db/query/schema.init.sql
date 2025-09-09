@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS goauth_user (
                                            hash_password TEXT NOT NULL,
                                            name VARCHAR(255),
                                            image TEXT,
+                                           role_name varchar(60) not null  default 'USER',
                                            email_verified BOOLEAN DEFAULT FALSE,
                                            two_factor_enabled BOOLEAN DEFAULT FALSE,
                                            two_factor_secret TEXT,
@@ -51,6 +52,14 @@ CREATE TABLE IF NOT EXISTS goauth_email_verification (
                                                          token TEXT UNIQUE NOT NULL,
                                                          expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
                                                          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- name: CreateAuditLogTable :exec
+CREATE  TABLE  IF NOT EXISTS  goauth_audit_log(
+                                                  id serial primary key ,
+                                                  event_type varchar not null ,
+                                                  log_entry jsonb not null default  '{}',
+                                                  occurred_at timestamp default  now()
 );
 
 -- name: CreateUserIndexes :exec

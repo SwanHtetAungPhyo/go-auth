@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Database(dsn string) *db.Store {
+func Database(dsn string, redisAsSessionStore bool) *db.Store {
 	pgxPool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
@@ -19,14 +19,14 @@ func Database(dsn string) *db.Store {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := runMigrations(ctx, store, dsn); err != nil {
+	if err := runMigrations(ctx, store, dsn, redisAsSessionStore); err != nil {
 		log.Fatal().Err(err).Msg("goauth: database migrations failed")
 	}
 
 	return store
 }
 
-func runMigrations(ctx context.Context, store *db.Store, dsn string) error {
+func runMigrations(ctx context.Context, store *db.Store, dsn string, redisAsSessionStore bool) error {
 	log.Info().Msgf("goauth: creating database with %s", dsn)
 
 	if err := store.CreateUserTable(ctx); err != nil {
@@ -41,19 +41,25 @@ func runMigrations(ctx context.Context, store *db.Store, dsn string) error {
 	if err := store.CreateAccountIndexes(ctx); err != nil {
 		return err
 	}
-	if err := store.CreateSessionTable(ctx); err != nil {
+	if err := store.CreateAuditLogTable(ctx); err != nil {
 		return err
 	}
-	if err := store.CreateSessionIndexes(ctx); err != nil {
-		return err
-	}
-	if err := store.CreatePasswordResetTable(ctx); err != nil {
-		return err
-	}
-	if err := store.CreateEmailVerificationTable(ctx); err != nil {
-		return err
+	if !redisAsSessionStore {
+		if err := store.CreateSessionTable(ctx); err != nil {
+			return err
+		}
+		if err := store.CreateSessionIndexes(ctx); err != nil {
+			return err
+		}
+		if err := store.CreatePasswordResetTable(ctx); err != nil {
+			return err
+		}
+		if err := store.CreateEmailVerificationTable(ctx); err != nil {
+			return err
+		}
+
+		log.Info().Msg("goauth: database migrations succeeded")
 	}
 
-	log.Info().Msg("goauth: database migrations succeeded")
 	return nil
 }

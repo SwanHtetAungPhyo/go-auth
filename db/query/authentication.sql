@@ -3,11 +3,13 @@ INSERT INTO goauth_user (
     email,
     hash_password,
     name,
+    role_name,
     metadata
 ) VALUES (
              @email,
              @hash_password,
              @name,
+          @role_name,
              @metadata
          ) RETURNING *;
 

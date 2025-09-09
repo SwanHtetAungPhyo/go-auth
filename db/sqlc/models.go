@@ -7,36 +7,44 @@ package db
 import (
 	"net/netip"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type GoauthAccount struct {
-	ID         pgtype.UUID        `db:"id" json:"id"`
-	UserID     pgtype.UUID        `db:"user_id" json:"userId"`
+	ID         uuid.UUID          `db:"id" json:"id"`
+	UserID     uuid.UUID          `db:"user_id" json:"userId"`
 	Provider   string             `db:"provider" json:"provider"`
 	ProviderID string             `db:"provider_id" json:"providerId"`
 	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"createdAt"`
 }
 
+type GoauthAuditLog struct {
+	ID         int32            `db:"id" json:"id"`
+	EventType  string           `db:"event_type" json:"eventType"`
+	LogEntry   []byte           `db:"log_entry" json:"logEntry"`
+	OccurredAt pgtype.Timestamp `db:"occurred_at" json:"occurredAt"`
+}
+
 type GoauthEmailVerification struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	ID        uuid.UUID          `db:"id" json:"id"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"createdAt"`
 }
 
 type GoauthPasswordReset struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	ID        uuid.UUID          `db:"id" json:"id"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"createdAt"`
 }
 
 type GoauthSession struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	ID        uuid.UUID          `db:"id" json:"id"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 	UserAgent pgtype.Text        `db:"user_agent" json:"userAgent"`
@@ -45,11 +53,12 @@ type GoauthSession struct {
 }
 
 type GoauthUser struct {
-	ID               pgtype.UUID        `db:"id" json:"id"`
+	ID               uuid.UUID          `db:"id" json:"id"`
 	Email            string             `db:"email" json:"email"`
 	HashPassword     string             `db:"hash_password" json:"hashPassword"`
 	Name             pgtype.Text        `db:"name" json:"name"`
 	Image            pgtype.Text        `db:"image" json:"image"`
+	RoleName         string             `db:"role_name" json:"roleName"`
 	EmailVerified    pgtype.Bool        `db:"email_verified" json:"emailVerified"`
 	TwoFactorEnabled pgtype.Bool        `db:"two_factor_enabled" json:"twoFactorEnabled"`
 	TwoFactorSecret  pgtype.Text        `db:"two_factor_secret" json:"twoFactorSecret"`

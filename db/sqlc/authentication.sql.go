@@ -9,6 +9,7 @@ import (
 	"context"
 	"net/netip"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -25,9 +26,9 @@ INSERT INTO goauth_account (
 `
 
 type CreateAccountParams struct {
-	UserID     pgtype.UUID `db:"user_id" json:"userId"`
-	Provider   string      `db:"provider" json:"provider"`
-	ProviderID string      `db:"provider_id" json:"providerId"`
+	UserID     uuid.UUID `db:"user_id" json:"userId"`
+	Provider   string    `db:"provider" json:"provider"`
+	ProviderID string    `db:"provider_id" json:"providerId"`
 }
 
 // sql/queries/accounts.sql
@@ -57,7 +58,7 @@ INSERT INTO goauth_email_verification (
 `
 
 type CreateEmailVerificationTokenParams struct {
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 }
@@ -89,7 +90,7 @@ INSERT INTO goauth_password_reset (
 `
 
 type CreatePasswordResetTokenParams struct {
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 }
@@ -125,7 +126,7 @@ INSERT INTO goauth_session (
 `
 
 type CreateSessionParams struct {
-	UserID    pgtype.UUID        `db:"user_id" json:"userId"`
+	UserID    uuid.UUID          `db:"user_id" json:"userId"`
 	Token     string             `db:"token" json:"token"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expiresAt"`
 	UserAgent pgtype.Text        `db:"user_agent" json:"userAgent"`
@@ -160,8 +161,8 @@ WHERE user_id = $1 AND provider = $2
 `
 
 type DeleteAccountParams struct {
-	UserID   pgtype.UUID `db:"user_id" json:"userId"`
-	Provider string      `db:"provider" json:"provider"`
+	UserID   uuid.UUID `db:"user_id" json:"userId"`
+	Provider string    `db:"provider" json:"provider"`
 }
 
 func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
@@ -218,7 +219,7 @@ const deleteSession = `-- name: DeleteSession :exec
 DELETE FROM goauth_session WHERE id = $1
 `
 
-func (q *Queries) DeleteSession(ctx context.Context, id pgtype.UUID) error {
+func (q *Queries) DeleteSession(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteSession, id)
 	return err
 }
@@ -227,7 +228,7 @@ const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM goauth_user WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
@@ -236,7 +237,7 @@ const deleteUserEmailVerificationTokens = `-- name: DeleteUserEmailVerificationT
 DELETE FROM goauth_email_verification WHERE user_id = $1
 `
 
-func (q *Queries) DeleteUserEmailVerificationTokens(ctx context.Context, userID pgtype.UUID) error {
+func (q *Queries) DeleteUserEmailVerificationTokens(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUserEmailVerificationTokens, userID)
 	return err
 }
@@ -245,7 +246,7 @@ const deleteUserPasswordResetTokens = `-- name: DeleteUserPasswordResetTokens :e
 DELETE FROM goauth_password_reset WHERE user_id = $1
 `
 
-func (q *Queries) DeleteUserPasswordResetTokens(ctx context.Context, userID pgtype.UUID) error {
+func (q *Queries) DeleteUserPasswordResetTokens(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUserPasswordResetTokens, userID)
 	return err
 }
@@ -254,13 +255,13 @@ const deleteUserSessions = `-- name: DeleteUserSessions :exec
 DELETE FROM goauth_session WHERE user_id = $1
 `
 
-func (q *Queries) DeleteUserSessions(ctx context.Context, userID pgtype.UUID) error {
+func (q *Queries) DeleteUserSessions(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUserSessions, userID)
 	return err
 }
 
 const getAccountByProvider = `-- name: GetAccountByProvider :one
-SELECT a.id, a.user_id, a.provider, a.provider_id, a.created_at, u.id, u.email, u.hash_password, u.name, u.image, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at FROM goauth_account a
+SELECT a.id, a.user_id, a.provider, a.provider_id, a.created_at, u.id, u.email, u.hash_password, u.name, u.image, u.role_name, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at FROM goauth_account a
                          JOIN goauth_user u ON a.user_id = u.id
 WHERE a.provider = $1 AND a.provider_id = $2
 `
@@ -271,16 +272,17 @@ type GetAccountByProviderParams struct {
 }
 
 type GetAccountByProviderRow struct {
-	ID               pgtype.UUID        `db:"id" json:"id"`
-	UserID           pgtype.UUID        `db:"user_id" json:"userId"`
+	ID               uuid.UUID          `db:"id" json:"id"`
+	UserID           uuid.UUID          `db:"user_id" json:"userId"`
 	Provider         string             `db:"provider" json:"provider"`
 	ProviderID       string             `db:"provider_id" json:"providerId"`
 	CreatedAt        pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	ID_2             pgtype.UUID        `db:"id_2" json:"id2"`
+	ID_2             uuid.UUID          `db:"id_2" json:"id2"`
 	Email            string             `db:"email" json:"email"`
 	HashPassword     string             `db:"hash_password" json:"hashPassword"`
 	Name             pgtype.Text        `db:"name" json:"name"`
 	Image            pgtype.Text        `db:"image" json:"image"`
+	RoleName         string             `db:"role_name" json:"roleName"`
 	EmailVerified    pgtype.Bool        `db:"email_verified" json:"emailVerified"`
 	TwoFactorEnabled pgtype.Bool        `db:"two_factor_enabled" json:"twoFactorEnabled"`
 	TwoFactorSecret  pgtype.Text        `db:"two_factor_secret" json:"twoFactorSecret"`
@@ -303,6 +305,7 @@ func (q *Queries) GetAccountByProvider(ctx context.Context, arg GetAccountByProv
 		&i.HashPassword,
 		&i.Name,
 		&i.Image,
+		&i.RoleName,
 		&i.EmailVerified,
 		&i.TwoFactorEnabled,
 		&i.TwoFactorSecret,
@@ -374,7 +377,7 @@ SELECT id, user_id, token, expires_at, user_agent, ip_address, created_at FROM g
 WHERE id = $1 AND expires_at > NOW()
 `
 
-func (q *Queries) GetSessionByID(ctx context.Context, id pgtype.UUID) (GoauthSession, error) {
+func (q *Queries) GetSessionByID(ctx context.Context, id uuid.UUID) (GoauthSession, error) {
 	row := q.db.QueryRow(ctx, getSessionByID, id)
 	var i GoauthSession
 	err := row.Scan(
@@ -391,7 +394,7 @@ func (q *Queries) GetSessionByID(ctx context.Context, id pgtype.UUID) (GoauthSes
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    u.id, u.email, u.hash_password, u.name, u.image, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at,
+    u.id, u.email, u.hash_password, u.name, u.image, u.role_name, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at,
     ARRAY_AGG(
     CASE
         WHEN a.id IS NOT NULL THEN
@@ -406,11 +409,12 @@ GROUP BY u.id
 `
 
 type GetUserByEmailRow struct {
-	ID               pgtype.UUID        `db:"id" json:"id"`
+	ID               uuid.UUID          `db:"id" json:"id"`
 	Email            string             `db:"email" json:"email"`
 	HashPassword     string             `db:"hash_password" json:"hashPassword"`
 	Name             pgtype.Text        `db:"name" json:"name"`
 	Image            pgtype.Text        `db:"image" json:"image"`
+	RoleName         string             `db:"role_name" json:"roleName"`
 	EmailVerified    pgtype.Bool        `db:"email_verified" json:"emailVerified"`
 	TwoFactorEnabled pgtype.Bool        `db:"two_factor_enabled" json:"twoFactorEnabled"`
 	TwoFactorSecret  pgtype.Text        `db:"two_factor_secret" json:"twoFactorSecret"`
@@ -429,6 +433,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.HashPassword,
 		&i.Name,
 		&i.Image,
+		&i.RoleName,
 		&i.EmailVerified,
 		&i.TwoFactorEnabled,
 		&i.TwoFactorSecret,
@@ -442,7 +447,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-    u.id, u.email, u.hash_password, u.name, u.image, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at,
+    u.id, u.email, u.hash_password, u.name, u.image, u.role_name, u.email_verified, u.two_factor_enabled, u.two_factor_secret, u.metadata, u.created_at, u.updated_at,
     ARRAY_AGG(
     CASE
         WHEN a.id IS NOT NULL THEN
@@ -457,11 +462,12 @@ GROUP BY u.id
 `
 
 type GetUserByIDRow struct {
-	ID               pgtype.UUID        `db:"id" json:"id"`
+	ID               uuid.UUID          `db:"id" json:"id"`
 	Email            string             `db:"email" json:"email"`
 	HashPassword     string             `db:"hash_password" json:"hashPassword"`
 	Name             pgtype.Text        `db:"name" json:"name"`
 	Image            pgtype.Text        `db:"image" json:"image"`
+	RoleName         string             `db:"role_name" json:"roleName"`
 	EmailVerified    pgtype.Bool        `db:"email_verified" json:"emailVerified"`
 	TwoFactorEnabled pgtype.Bool        `db:"two_factor_enabled" json:"twoFactorEnabled"`
 	TwoFactorSecret  pgtype.Text        `db:"two_factor_secret" json:"twoFactorSecret"`
@@ -471,7 +477,7 @@ type GetUserByIDRow struct {
 	Accounts         interface{}        `db:"accounts" json:"accounts"`
 }
 
-func (q *Queries) GetUserByID(ctx context.Context, userID pgtype.UUID) (GetUserByIDRow, error) {
+func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByID, userID)
 	var i GetUserByIDRow
 	err := row.Scan(
@@ -480,6 +486,7 @@ func (q *Queries) GetUserByID(ctx context.Context, userID pgtype.UUID) (GetUserB
 		&i.HashPassword,
 		&i.Name,
 		&i.Image,
+		&i.RoleName,
 		&i.EmailVerified,
 		&i.TwoFactorEnabled,
 		&i.TwoFactorSecret,
@@ -496,19 +503,22 @@ INSERT INTO goauth_user (
     email,
     hash_password,
     name,
+    role_name,
     metadata
 ) VALUES (
              $1,
              $2,
              $3,
-             $4
-         ) RETURNING id, email, hash_password, name, image, email_verified, two_factor_enabled, two_factor_secret, metadata, created_at, updated_at
+          $4,
+             $5
+         ) RETURNING id, email, hash_password, name, image, role_name, email_verified, two_factor_enabled, two_factor_secret, metadata, created_at, updated_at
 `
 
 type GoAuthRegisterParams struct {
 	Email        string      `db:"email" json:"email"`
 	HashPassword string      `db:"hash_password" json:"hashPassword"`
 	Name         pgtype.Text `db:"name" json:"name"`
+	RoleName     string      `db:"role_name" json:"roleName"`
 	Metadata     []byte      `db:"metadata" json:"metadata"`
 }
 
@@ -517,6 +527,7 @@ func (q *Queries) GoAuthRegister(ctx context.Context, arg GoAuthRegisterParams) 
 		arg.Email,
 		arg.HashPassword,
 		arg.Name,
+		arg.RoleName,
 		arg.Metadata,
 	)
 	var i GoauthUser
@@ -526,6 +537,7 @@ func (q *Queries) GoAuthRegister(ctx context.Context, arg GoAuthRegisterParams) 
 		&i.HashPassword,
 		&i.Name,
 		&i.Image,
+		&i.RoleName,
 		&i.EmailVerified,
 		&i.TwoFactorEnabled,
 		&i.TwoFactorSecret,
@@ -544,11 +556,11 @@ SET
     metadata = COALESCE($4, metadata),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, email, hash_password, name, image, email_verified, two_factor_enabled, two_factor_secret, metadata, created_at, updated_at
+RETURNING id, email, hash_password, name, image, role_name, email_verified, two_factor_enabled, two_factor_secret, metadata, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	ID       pgtype.UUID `db:"id" json:"id"`
+	ID       uuid.UUID   `db:"id" json:"id"`
 	Name     pgtype.Text `db:"name" json:"name"`
 	Image    pgtype.Text `db:"image" json:"image"`
 	Metadata []byte      `db:"metadata" json:"metadata"`
@@ -568,6 +580,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (GoauthU
 		&i.HashPassword,
 		&i.Name,
 		&i.Image,
+		&i.RoleName,
 		&i.EmailVerified,
 		&i.TwoFactorEnabled,
 		&i.TwoFactorSecret,
@@ -585,7 +598,7 @@ WHERE id = $1
 `
 
 type UpdateUserEmailVerifiedParams struct {
-	ID            pgtype.UUID `db:"id" json:"id"`
+	ID            uuid.UUID   `db:"id" json:"id"`
 	EmailVerified pgtype.Bool `db:"email_verified" json:"emailVerified"`
 }
 
@@ -604,7 +617,7 @@ WHERE id = $1
 `
 
 type UpdateUserTwoFactorParams struct {
-	ID               pgtype.UUID `db:"id" json:"id"`
+	ID               uuid.UUID   `db:"id" json:"id"`
 	TwoFactorEnabled pgtype.Bool `db:"two_factor_enabled" json:"twoFactorEnabled"`
 	TwoFactorSecret  pgtype.Text `db:"two_factor_secret" json:"twoFactorSecret"`
 }

@@ -18,6 +18,7 @@ type (
 		GoogleCallback(c fiber.Ctx) error
 		GithubLogin(c fiber.Ctx) error
 		GithubCallback(c fiber.Ctx) error
+		Me(c fiber.Ctx) error
 	}
 
 	Gin interface {

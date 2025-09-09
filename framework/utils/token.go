@@ -8,36 +8,22 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/o1egl/paseto"
+	"github.com/rs/zerolog/log"
 )
-
-// TokenType represents the type of token
-type TokenType string
-
-const (
-	JWT    TokenType = "jwt"
-	PASETO TokenType = "paseto"
-)
-
-// Claims represents the common claims for both JWT and PASETO
-type Claims struct {
-	UserID string
-	Email  string
-	Role   string
-}
 
 // ----------------------
 // TOKEN GENERATION
 // ----------------------
 
 // GenerateToken generates JWT or PASETO token based on type
-func GenerateToken(claims Claims, tokenType TokenType, duration time.Duration) (string, error) {
+func GenerateToken(claims Claims, tokenType TokenType, duration time.Duration) (*TokenContextContainer, error) {
 	switch tokenType {
 	case JWT:
 		return generateJWT(claims, duration)
-	case PASETO:
-		return generatePaseto(claims, duration)
+	//case PASETO:
+	//	return generatePaseto(claims, duration)
 	default:
-		return "", errors.New("unsupported token type")
+		return nil, errors.New("unsupported token type")
 	}
 }
 
@@ -45,45 +31,66 @@ func GenerateToken(claims Claims, tokenType TokenType, duration time.Duration) (
 // JWT GENERATION
 // ----------------------
 
-func generateJWT(claims Claims, duration time.Duration) (string, error) {
+func generateJWT(claims Claims, duration time.Duration) (*TokenContextContainer, error) {
 	jwtSecret := os.Getenv("GOAUTH_JWT_SECRET")
 	if jwtSecret == "" {
-		return "", errors.New("JWT_SECRET not set in environment")
+		return nil, errors.New("JWT_SECRET not set in environment")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": claims.UserID,
-		"email":   claims.Email,
-		"role":    claims.Role,
-		"exp":     time.Now().Add(duration).Unix(),
+	accessDuration := time.Now().Add(duration).Unix()
+	accesstoken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		Type:   JWT_ACCESS_TOKEN,
+		UserId: claims.UserID,
+		Role:   claims.Role,
+		Exp:    accessDuration,
 	})
 
-	return token.SignedString([]byte(jwtSecret))
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		Type:   JWT_REFRESH_TOKEN,
+		UserId: claims.UserID,
+		Role:   claims.Role,
+		Exp:    time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	signedAccessToken, err := accesstoken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		log.Err(err).Msg("error signing access token")
+		return nil, err
+	}
+	signedRefreshToken, err := refreshToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		log.Err(err).Msg("error signing refresh token")
+		return nil, err
+	}
+	return &TokenContextContainer{
+		AccessToken:  signedAccessToken,
+		RefreshToken: signedRefreshToken,
+	}, nil
 }
 
 // ----------------------
 // PASETO GENERATION
 // ----------------------
 
-func generatePaseto(claims Claims, duration time.Duration) (string, error) {
-	pasetoKey := os.Getenv("GOAUTH_PASETO_KEY")
-	if pasetoKey == "" {
-		return "", errors.New("PASETO_KEY not set in environment")
-	}
-
-	v2 := paseto.NewV2()
-	jsonToken := paseto.JSONToken{
-		Audience:   "",
-		Issuer:     "",
-		Jti:        "",
-		Subject:    "",
-		Expiration: time.Now().Add(duration),
-		IssuedAt:   time.Time{},
-		NotBefore:  time.Time{},
-	}
-
-	return v2.Encrypt([]byte(pasetoKey), jsonToken, "")
-}
+//func generatePaseto(claims Claims, duration time.Duration) (*TokenContextContainer, error) {
+//	pasetoKey := os.Getenv("GOAUTH_PASETO_KEY")
+//	if pasetoKey == "" {
+//		return nil, errors.New("PASETO_KEY not set in environment")
+//	}
+//
+//	v2 := paseto.NewV2()
+//	jsonToken := paseto.JSONToken{
+//		Audience:   "",
+//		Issuer:     "",
+//		Jti:        "",
+//		Subject:    "",
+//		Expiration: time.Now().Add(duration),
+//		IssuedAt:   time.Time{},
+//		NotBefore:  time.Time{},
+//	}
+//
+//	return v2.Encrypt([]byte(pasetoKey), jsonToken, "")
+//}
 
 // ----------------------
 // TOKEN VALIDATION
